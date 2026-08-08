@@ -74,8 +74,8 @@ const Sidebar = ({ activePage, setActivePage, sidebarOpen, setSidebarOpen }) => 
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <img src="/logo.jpg" alt="" style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover' }} />
-          <span style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.3px' }}>Bleep CRM</span>
+          <img src="/Z_logo.jpeg" alt="" style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover' }} />
+          <span style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: '-0.3px' }}>Zeravia_beta---CRM</span>
         </div>
 
         <nav className="sidebar-nav">

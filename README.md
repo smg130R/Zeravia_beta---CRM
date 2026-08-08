@@ -1,4 +1,4 @@
-# Bleep CRM
+# Zeravia_beta---CRM
 
 Enterprise-grade CRM for managing sales teams, calling operations, lead distribution, and performance analytics. Built with React + Vite frontend, Express backend, Supabase (PostgreSQL), and Google Sheets integration.
 

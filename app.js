@@ -583,7 +583,7 @@ function switchPage(pageId) {
     settings: { title: "Platform Settings", subtitle: "Google Sheets linking, sync scheduling & KPI targets" }
   };
   
-  const textInfo = titleMap[pageId] || { title: "Bleep CRM", subtitle: "Office Management Board" };
+  const textInfo = titleMap[pageId] || { title: "Zeravia_beta---CRM", subtitle: "Office Management Board" };
   document.getElementById("header-page-title").innerText = textInfo.title;
   document.getElementById("header-page-subtitle").innerText = textInfo.subtitle;
 

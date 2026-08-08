@@ -1,7 +1,7 @@
 {
-  "name": "bleep-crm",
+  "name": "zeravia-beta-crm",
   "version": "1.0.0",
-  "description": "Bleep CRM - Office Management & Sales KPI Platform",
+  "description": "Zeravia_beta---CRM - Office Management & Sales KPI Platform",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -3,7 +3,7 @@ import { X, ChevronRight, ChevronLeft, LayoutDashboard, TableProperties, Network
 
 const steps = [
   {
-    title: 'Welcome to Bleep CRM',
+    title: 'Welcome to Zeravia_beta---CRM',
     icon: HelpCircle,
     content: 'This walkthrough covers the main features. Use the arrows or dots to navigate. Click the help icon anytime to reopen.',
     color: '#2563EB',

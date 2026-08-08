@@ -42,7 +42,7 @@ const Header = ({ activePage, dateFilter, setDateFilter, onOpenComplaintModal, s
 
   if (!user) return null;
 
-  const info = titleMap[activePage] || { title: 'Bleep CRM', subtitle: '' };
+    const info = titleMap[activePage] || { title: 'Zeravia_beta---CRM', subtitle: '' };
 
   return (
     <header className="app-header">

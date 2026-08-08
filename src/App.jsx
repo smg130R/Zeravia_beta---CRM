@@ -66,7 +66,7 @@ const MainApp = () => {
   if (loading) {
     return (
       <div style={{ display: 'flex', height: '100vh', width: '100vw', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: 'var(--text-muted)' }}>
-        Loading Bleep CRM session...
+        Loading Zeravia_beta---CRM session...
       </div>
     );
   }

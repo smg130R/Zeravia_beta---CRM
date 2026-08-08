@@ -125,7 +125,7 @@ const Login = () => {
 
         {/* Footer */}
         <div style={{ position: 'absolute', bottom: 24, left: 80, right: 80, display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#9CA3AF', zIndex: 1 }}>
-          <span>© 2026 Bleep Technologies</span>
+          <span>© 2026 Zeravia Technologies</span>
           <div style={{ display: 'flex', gap: 16 }}>
             <a href="#" style={{ color: '#9CA3AF', textDecoration: 'none' }}>Privacy Policy</a>
             <a href="#" style={{ color: '#9CA3AF', textDecoration: 'none' }}>Terms</a>
@@ -154,12 +154,12 @@ const Login = () => {
         }}>
           {/* Logo + Brand */}
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <img src="/logo.jpg" alt="" style={{
+            <img src="/Z_logo.jpeg" alt="" style={{
               width: 56, height: 56, borderRadius: 16, objectFit: 'cover',
               boxShadow: '0 4px 12px rgba(37,99,235,0.15)',
               animation: 'fadeIn 0.4s ease',
             }} />
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#111827', marginTop: 12, letterSpacing: '-0.3px' }}>Bleep CRM</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#111827', marginTop: 12, letterSpacing: '-0.3px' }}>Zeravia_beta---CRM</div>
             <div style={{ fontSize: 15, color: '#6B7280', marginTop: 4 }}>Welcome back</div>
           </div>
 
@@ -318,7 +318,7 @@ const Login = () => {
 
           {/* Powered by */}
           <div style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: '#D1D5DB', letterSpacing: '0.3px' }}>
-            Powered by Bleep Technologies
+            Powered by Zeravia Technologies
           </div>
         </div>
 

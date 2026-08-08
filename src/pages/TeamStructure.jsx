@@ -136,12 +136,12 @@ const TeamStructure = ({ showToast }) => {
         </button>
 
         <div className="role-welcome-banner" style={{
-          background: `linear-gradient(135deg, rgba(13,69,178,0.92) 0%, rgba(10,45,120,0.95) 100%), url(/banner.jpg) center/cover no-repeat`,
+          background: `linear-gradient(135deg, rgba(13,69,178,0.92) 0%, rgba(10,45,120,0.95) 100%), url(/Z_logo.jpeg) center/cover no-repeat`,
           padding: '2rem 2rem',
           borderRadius: 'var(--radius-lg)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <img src="/logo.jpg" alt="" style={{ width: '48px', height: '48px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', objectFit: 'cover' }} />
+            <img src="/Z_logo.jpeg" alt="" style={{ width: '48px', height: '48px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', objectFit: 'cover' }} />
             <div>
               <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#fff', margin: 0 }}>Team {teamDetail.teamId} Division Details</h2>
               <p style={{ color: 'rgba(255,255,255,0.7)', marginTop: '0.25rem', margin: '0.25rem 0 0 0' }}>

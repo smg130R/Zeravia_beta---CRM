@@ -240,10 +240,11 @@ router.post('/', authenticateToken, requireRoles(['admin', 'hr', 'ops_head', 'te
     });
 
     if (authError) {
-      if (authError.message?.includes('already exists') || authError.status === 409) {
+      if (authError.message?.includes('already exists') || authError.message?.includes('already been registered') || authError.code === 'email_exists' || authError.code === 'duplicate') {
         return res.status(400).json({ message: 'Email address already exists.' });
       }
-      throw authError;
+      console.error('Create employee auth error:', authError.message, authError.status);
+      return res.status(500).json({ message: 'Failed to create employee account.' });
     }
 
     // The handle_new_user trigger already inserted the row; fetch it

@@ -32,7 +32,8 @@ CREATE TABLE users (
   "assignedSheetUrl" TEXT,
   "prospectSheetTab" TEXT DEFAULT 'Sheet1',
   "prospectSheetUrl" TEXT,
-  "assignedSheetTab" TEXT DEFAULT 'Sheet1'
+  "assignedSheetTab" TEXT DEFAULT 'Sheet1',
+  "employeeCode" TEXT
 );
 
 CREATE INDEX idx_users_email ON users(email);

@@ -8,7 +8,7 @@
 
 const supabase = require('../server/db/supabase');
 
-const ADMIN_EMAIL = 'admin@company.com';
+const ADMIN_EMAIL = 'bapidatta18@gmail.com';
 const ADMIN_PASSWORD = 'password123';
 
 async function main() {

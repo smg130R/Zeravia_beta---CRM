@@ -83,6 +83,8 @@ CREATE TABLE leads (
   "teamId" TEXT NOT NULL,
   "customerName" TEXT NOT NULL,
   contact TEXT NOT NULL,
+  whatsapp TEXT DEFAULT '',
+  "sheetRow" INTEGER,
   college TEXT,
   branch TEXT,
   year TEXT,

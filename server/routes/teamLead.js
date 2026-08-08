@@ -60,7 +60,73 @@ router.post('/import', authenticateToken, requireRoles(['team_lead', 'admin']), 
   }
 });
 
-// POST /api/team-lead/deduplicate - Remove duplicate leads by contact, keep latest
+// GET /api/team-lead/sheets-check - Diagnose Google Sheets auth + master sheet read
+router.get('/sheets-check', authenticateToken, requireRoles(['team_lead', 'admin']), async (req, res) => {
+  try {
+    const teamId = req.user.teamId;
+    const { google } = require('googleapis');
+    const { normalizePrivateKey, extractSheetId, importLeadsFromMasterSheet } = require('../services/sheetsSync');
+
+    const saEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const rawKey = process.env.GOOGLE_PRIVATE_KEY;
+    const hasEmail = !!saEmail;
+    const hasKey = !!rawKey;
+
+    let authOk = false;
+    let authError = null;
+    let keyPreview = null;
+    if (hasKey) {
+      try {
+        const key = normalizePrivateKey(rawKey);
+        keyPreview = String(key).slice(0, 30) + '...';
+        const auth = new google.auth.JWT({ email: saEmail, key, scopes: ['https://www.googleapis.com/auth/spreadsheets'] });
+        await auth.authorize();
+        authOk = true;
+      } catch (e) {
+        authError = e.message;
+      }
+    } else {
+      authError = 'GOOGLE_PRIVATE_KEY is not set';
+    }
+
+    let masterSheetUrl = null;
+    if (teamId) masterSheetUrl = await teamLeadData.getMasterSheetUrl(teamId);
+
+    let sheetReadOk = false;
+    let rowsFound = 0;
+    let sheetReadError = null;
+    if (authOk && masterSheetUrl) {
+      try {
+        const sheetId = extractSheetId(masterSheetUrl);
+        const leads = await importLeadsFromMasterSheet(sheetId);
+        sheetReadOk = true;
+        rowsFound = leads.length;
+      } catch (e) {
+        sheetReadError = e.message;
+      }
+    }
+
+    return res.json({
+      teamId,
+      serviceAccount: { email: saEmail || null, hasEmail, hasKey, keyPreview, authOk, authError },
+      masterSheet: { url: masterSheetUrl, sheetReadOk, rowsFound, sheetReadError },
+      tip: !hasKey
+        ? 'Set GOOGLE_SERVICE_ACCOUNT_EMAIL and GOOGLE_PRIVATE_KEY in server .env / Render env vars.'
+        : !authOk
+          ? 'Service account auth failed — check the private key value and that the account still exists.'
+          : !masterSheetUrl
+            ? 'No master sheet URL configured for this team.'
+            : sheetReadOk
+              ? 'Google Sheets connection is working.'
+              : 'Auth OK but reading the sheet failed — share the sheet with ' + (saEmail || 'the service account') + ' as Editor.',
+    });
+  } catch (error) {
+    console.error('Sheets diagnostic error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
 router.post('/deduplicate', authenticateToken, requireRoles(['team_lead', 'admin']), async (req, res) => {
   try {
     const teamId = req.user.teamId;

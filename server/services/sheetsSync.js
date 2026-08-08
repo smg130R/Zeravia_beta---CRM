@@ -3,14 +3,26 @@ const { google } = require('googleapis');
 const supabase = require('../db/supabase');
 const { smartCleanRow } = require('./smartClean');
 
+// Normalize a service-account private key so it works regardless of the platform's env var format.
+// Render (and most PaaS dashboards) store env vars as single-line values, so the PEM's \n
+// sequences can arrive as literal backslash-n, real newlines, or double-escaped backslash-n.
+function normalizePrivateKey(raw) {
+  if (!raw) return raw;
+  let key = String(raw).trim();
+  if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) {
+    key = key.slice(1, -1);
+  }
+  if (key.includes('\\n')) key = key.replace(/\\n/g, '\n');
+  return key;
+}
+
 async function getSheetsClient() {
   const saEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  let saKey = process.env.GOOGLE_PRIVATE_KEY;
+  const saKey = normalizePrivateKey(process.env.GOOGLE_PRIVATE_KEY);
   if (!saEmail || !saKey) {
-    console.warn('Google Sheets Credentials missing. Sync running in simulated mode.');
+    console.warn('Google Sheets credentials missing. Running without Google Sheets integration.');
     return null;
   }
-  saKey = saKey.replace(/\\n/g, '\n');
   const auth = new google.auth.JWT({ email: saEmail, key: saKey, scopes: ['https://www.googleapis.com/auth/spreadsheets'] });
   await auth.authorize();
   return google.sheets({ version: 'v4', auth });
@@ -368,8 +380,9 @@ async function importLeadsFromMasterSheet(spreadsheetId, tab = 'Sheet1') {
   try {
     sheets = await getSheetsClient();
   } catch (e) {
-    console.error('Failed to init Sheets client for master import:', e.message);
-    return [];
+    // Auth failure must NOT look like "no leads found" — surface it clearly.
+    console.error('Sheets auth failed for master import:', e.message);
+    throw new Error('Google Sheets authentication failed: ' + e.message);
   }
   if (!sheets || !spreadsheetId) {
     console.log('[Simulated] Reading master sheet for import');
@@ -515,4 +528,4 @@ async function updateMasterSheetStatus(spreadsheetId, tab, sheetRow, newStatus, 
   }
 }
 
-module.exports = { startCronScheduler, runAllSyncs, syncBdaSheet, syncBdaProspects, pushBdaLeadsToSheet, markBdaSheetRowDeleted, extractSheetId, importLeadsFromMasterSheet, parseRowsWithHeaders, updateMasterSheetAssignments, updateMasterSheetStatus };
+module.exports = { startCronScheduler, runAllSyncs, syncBdaSheet, syncBdaProspects, pushBdaLeadsToSheet, markBdaSheetRowDeleted, extractSheetId, importLeadsFromMasterSheet, parseRowsWithHeaders, updateMasterSheetAssignments, updateMasterSheetStatus, normalizePrivateKey };

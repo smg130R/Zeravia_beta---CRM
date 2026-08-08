@@ -3,6 +3,28 @@ const { smartCleanRow } = require('./smartClean');
 
 // ── Team Config (masterSheetUrl on teams table) ──
 
+// Detect leads-table columns that don't exist on the live DB (schema drift) so
+// inserts/updates can omit them instead of failing. Cached per server process.
+let cachedMissingLeadCols = null;
+
+async function getMissingLeadCols() {
+  if (cachedMissingLeadCols) return cachedMissingLeadCols;
+  const candidates = ['whatsapp', 'sheetRow', 'email', 'remarks', 'payment_status', 'slot_amount', 'amount_paid', 'remaining'];
+  const missing = new Set();
+  for (const c of candidates) {
+    const { error } = await supabase.from('leads').select(c).limit(1);
+    if (error) missing.add(c);
+  }
+  cachedMissingLeadCols = missing;
+  return missing;
+}
+
+function stripMissingCols(row, missing) {
+  const out = { ...row };
+  for (const c of missing) delete out[c];
+  return out;
+}
+
 async function getMasterSheetUrl(teamId) {
   const { data } = await supabase.from('teams').select('"masterSheetUrl"').eq('id', teamId).limit(1).maybeSingle();
   return data?.masterSheetUrl || '';
@@ -26,6 +48,7 @@ async function getLeadById(teamId, leadId) {
 
 async function addLeads(teamId, newLeads) {
   const today = new Date().toISOString().split('T')[0];
+  const missingCols = await getMissingLeadCols();
   const { data: existing } = await supabase.from('leads').select('*').eq('teamId', teamId);
   const existingByContact = new Map((existing || []).map(l => [l.contact.replace(/\D/g, ''), l]));
 
@@ -37,32 +60,34 @@ async function addLeads(teamId, newLeads) {
     const match = existingByContact.get(contactKey);
     if (match) {
       // Update existing record with corrected data
-      toUpdate.push({
+      const patch = {
         id: match.id,
         customerName: lead.customerName,
         contact: lead.contact,
-        whatsapp: lead.whatsapp || '',
         college: lead.college || '',
         branch: lead.branch || '',
         year: lead.year || '',
-      });
+      };
+      if (!missingCols.has('whatsapp')) patch.whatsapp = lead.whatsapp || '';
+      toUpdate.push(patch);
     } else {
-      toInsert.push({
+      const row = {
         teamId,
         customerName: lead.customerName,
         contact: lead.contact,
-        whatsapp: lead.whatsapp || '',
         college: lead.college || '',
         branch: lead.branch || '',
         year: lead.year || '',
-        sheetRow: lead.sheetRow || null,
         status: 'unassigned',
         naCount: 0,
         assignedInMaster: false,
         currentAssigneeId: null,
         createdAt: today,
         updatedAt: today,
-      });
+      };
+      if (!missingCols.has('whatsapp')) row.whatsapp = lead.whatsapp || '';
+      if (!missingCols.has('sheetRow')) row.sheetRow = lead.sheetRow || null;
+      toInsert.push(row);
     }
   }
 
@@ -72,15 +97,16 @@ async function addLeads(teamId, newLeads) {
   }
 
   for (const upd of toUpdate) {
-    const { error } = await supabase.from('leads').update({
+    const patch = {
       customerName: upd.customerName,
       contact: upd.contact,
-      whatsapp: upd.whatsapp || '',
-      college: upd.college,
-      branch: upd.branch,
-      year: upd.year,
+      college: upd.college || '',
+      branch: upd.branch || '',
+      year: upd.year || '',
       updatedAt: today,
-    }).eq('id', upd.id);
+    };
+    if (!missingCols.has('whatsapp')) patch.whatsapp = upd.whatsapp || '';
+    const { error } = await supabase.from('leads').update(patch).eq('id', upd.id);
     if (error) console.error('Error updating lead', upd.id, error.message);
   }
 

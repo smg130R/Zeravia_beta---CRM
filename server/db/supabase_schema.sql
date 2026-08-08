@@ -279,6 +279,11 @@ ALTER TABLE complaints ENABLE ROW LEVEL SECURITY;
 -- For a service-role setup, these are permissive to the authenticated
 -- role used by the backend. Adjust as needed for anon keys.
 
+-- =====================================================
+-- REPORT SHEETS config is stored in platform_config under key 'reportSheets'
+-- (JSON array) — no dedicated table required.
+-- =====================================================
+
 CREATE POLICY "Service role full access users" ON users FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Service role full access teams" ON teams FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Service role full access kpi_records" ON kpi_records FOR ALL USING (true) WITH CHECK (true);

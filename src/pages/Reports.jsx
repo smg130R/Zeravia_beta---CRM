@@ -5,7 +5,8 @@ import {
   CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement,
   Title, Tooltip, Legend, Filler
 } from 'chart.js';
-import { ArrowLeft, Users, PhoneCall, Trophy, Crosshair } from 'lucide-react';
+import { ArrowLeft, Users, PhoneCall, Trophy, Crosshair, FileSpreadsheet, Plus, Trash2, Send, Loader, ExternalLink, Link2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler);
 
@@ -15,13 +16,102 @@ const TEAM_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#f9
 const rangeMap = { 'Today': 'today', '7 Days': 'weekly', '30 Days': 'monthly' };
 
 const Reports = ({ dateFilter = '7 Days', showToast }) => {
+  const { user } = useAuth();
   const [teams, setTeams] = useState([]);
   const [members, setMembers] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [loading, setLoading] = useState(true);
   const [memberLoading, setMemberLoading] = useState(false);
 
-  useEffect(() => { fetchTeams(); const i = setInterval(fetchTeams, 15000); return () => clearInterval(i); }, [dateFilter]);
+  // Google Sheets reports export (Admin / Ops / HR)
+  const [reportSheets, setReportSheets] = useState([]);
+  const [reportSaEmail, setReportSaEmail] = useState(null);
+  const [reportName, setReportName] = useState('');
+  const [reportUrl, setReportUrl] = useState('');
+  const [addingReport, setAddingReport] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const canManageReports = ['admin', 'ops_head', 'hr'].includes(user?.role);
+
+  const fetchReportSheets = async () => {
+    if (!canManageReports) return;
+    try {
+      const res = await fetch('/api/reports/sheets', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setReportSheets(data.sheets || []);
+        setReportSaEmail(data.serviceAccountEmail || null);
+      }
+    } catch (e) { console.error('Fetch report sheets error:', e); }
+  };
+
+  useEffect(() => {
+    fetchTeams();
+    const i = setInterval(fetchTeams, 15000);
+    if (canManageReports) fetchReportSheets();
+    return () => clearInterval(i);
+  }, [dateFilter, canManageReports]);
+
+  const addReportSheet = async () => {
+    if (!reportUrl.trim()) return showToast('Paste the Google Sheet URL first.', true);
+    setAddingReport(true);
+    try {
+      const res = await fetch('/api/reports/sheets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: reportName.trim(), url: reportUrl.trim() }),
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReportName('');
+        setReportUrl('');
+        setReportSaEmail(data.serviceAccountEmail || reportSaEmail);
+        showToast(data.message || 'Report sheet added.');
+        fetchReportSheets();
+      } else {
+        showToast(data.message || 'Failed to add sheet.', true);
+      }
+    } catch (e) {
+      showToast('Connection error while adding sheet.', true);
+    } finally {
+      setAddingReport(false);
+    }
+  };
+
+  const removeReportSheet = async (id) => {
+    if (!window.confirm('Remove this report sheet?')) return;
+    try {
+      const res = await fetch(`/api/reports/sheets/${id}`, { method: 'DELETE', credentials: 'include' });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message);
+        fetchReportSheets();
+      } else {
+        showToast(data.message || 'Failed to remove sheet.', true);
+      }
+    } catch (e) {
+      showToast('Connection error.', true);
+    }
+  };
+
+  const exportReports = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch('/api/reports/sheets/export', { method: 'POST', credentials: 'include' });
+      const data = await res.json();
+      if (res.ok) {
+        showToast(data.message || 'Reports exported.');
+        fetchReportSheets();
+      } else {
+        showToast(data.message || 'Export failed.', true);
+      }
+    } catch (e) {
+      showToast('Connection error while exporting.', true);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const fetchTeams = async () => {
     setLoading(true);
@@ -76,6 +166,103 @@ const Reports = ({ dateFilter = '7 Days', showToast }) => {
 
   return (
     <div className="view-section active">
+      {canManageReports && (
+        <div className="content-card" style={{ marginBottom: '1.5rem' }}>
+          <div className="card-header" style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <FileSpreadsheet size={18} /> Google Sheets Reports Export
+            </h3>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0.35rem 0 0' }}>
+              Add a Google Spreadsheet and its Monthly KPI, Weekly KPI, Team Performance and Conversion Funnel tabs are written on export.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+            <input
+              type="text"
+              placeholder="Sheet name (e.g. March Reports)"
+              value={reportName}
+              onChange={(e) => setReportName(e.target.value)}
+              style={{
+                padding: '0.5rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)',
+                background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: '0.85rem', fontFamily: 'var(--font-family)',
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Google Spreadsheet URL (https://docs.google.com/spreadsheets/d/...)"
+              value={reportUrl}
+              onChange={(e) => setReportUrl(e.target.value)}
+              style={{
+                padding: '0.5rem 0.75rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)',
+                background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: '0.85rem', fontFamily: 'var(--font-family)',
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+            <button
+              className="btn btn-primary"
+              onClick={addReportSheet}
+              disabled={addingReport}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
+            >
+              {addingReport ? <Loader size={14} className="animate-spin" /> : <Plus size={14} />} Add Sheet
+            </button>
+            <button
+              className="btn btn-secondary"
+              onClick={exportReports}
+              disabled={exporting || reportSheets.length === 0}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
+              title={reportSheets.length === 0 ? 'Add a sheet first' : 'Export reports to all configured sheets'}
+            >
+              {exporting ? <Loader size={14} className="animate-spin" /> : <Send size={14} />} {exporting ? 'Exporting...' : 'Export Reports Now'}
+            </button>
+            {reportSaEmail && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                Share each sheet as Editor with <strong style={{ color: 'var(--text-primary)' }}>{reportSaEmail}</strong>
+              </span>
+            )}
+          </div>
+
+          {reportSheets.length === 0 ? (
+            <p style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem', background: 'var(--bg-main)', borderRadius: 'var(--radius-md)' }}>
+              No report sheets configured yet.
+            </p>
+          ) : (
+            <div className="table-responsive">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Sheet</th>
+                    <th>Last Exported</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reportSheets.map(s => (
+                    <tr key={s.id}>
+                      <td style={{ fontWeight: 600 }}>{s.name || 'Reports'}</td>
+                      <td style={{ fontSize: '0.8rem' }}>
+                        <a href={s.url} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <Link2 size={12} /> Open Sheet <ExternalLink size={10} />
+                        </a>
+                      </td>
+                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{s.lastExportedAt ? new Date(s.lastExportedAt).toLocaleString() : 'Never'}</td>
+                      <td>
+                        <button className="btn btn-danger" onClick={() => removeReportSheet(s.id)} style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <Trash2 size={12} /> Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {selectedTeam && (
         <div style={{ marginBottom: '1rem' }}>
           <button className="btn btn-secondary" onClick={() => { setSelectedTeam(null); setMembers([]); }} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>

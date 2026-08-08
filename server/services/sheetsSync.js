@@ -529,4 +529,4 @@ async function updateMasterSheetStatus(spreadsheetId, tab, sheetRow, newStatus, 
   }
 }
 
-module.exports = { startCronScheduler, runAllSyncs, syncBdaSheet, syncBdaProspects, pushBdaLeadsToSheet, markBdaSheetRowDeleted, extractSheetId, importLeadsFromMasterSheet, parseRowsWithHeaders, updateMasterSheetAssignments, updateMasterSheetStatus, normalizePrivateKey };
+module.exports = { startCronScheduler, runAllSyncs, syncBdaSheet, syncBdaProspects, pushBdaLeadsToSheet, markBdaSheetRowDeleted, extractSheetId, importLeadsFromMasterSheet, parseRowsWithHeaders, updateMasterSheetAssignments, updateMasterSheetStatus, normalizePrivateKey, getSheetsClient };

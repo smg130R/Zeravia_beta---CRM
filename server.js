@@ -17,6 +17,7 @@ const teamLeadRoutes = require('./server/routes/teamLead');
 const prospectRoutes = require('./server/routes/prospects');
 const notificationRoutes = require('./server/routes/notifications');
 const settingsRoutes = require('./server/routes/settings');
+const reportsRoutes = require('./server/routes/reports');
 const hrRoutes = require('./server/routes/hr');
 
 const app = express();
@@ -53,6 +54,7 @@ app.use('/api/team-lead', teamLeadRoutes);
 app.use('/api/prospects', prospectRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/reports', reportsRoutes);
 app.use('/api/hr', hrRoutes);
 
 // Fallback for SPA Routing in Production

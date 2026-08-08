@@ -4,6 +4,7 @@ const supabase = require('../db/supabase');
 const { authenticateToken, requireRoles } = require('../middleware/auth');
 
 const { smartCleanRow } = require('../services/smartClean');
+const { pruneRow, pruneRows } = require('../services/columns');
 
 // GET /api/calling - Get BDA's own calling sheet (with smart field cleanup)
 router.get('/', authenticateToken, requireRoles(['bda']), async (req, res) => {
@@ -176,7 +177,7 @@ router.patch('/:id', authenticateToken, requireRoles(['bda']), async (req, res) 
     }
     await supabase
       .from('calling_sheet')
-      .update(updateFields)
+      .update(await pruneRow(updateFields, 'calling_sheet', ['followUpDate', 'priority', 'whatsapp']))
       .eq('id', id);
 
     // Sync status and remarks back to leads table
@@ -430,7 +431,7 @@ router.post('/fetch-leads', authenticateToken, requireRoles(['bda']), async (req
         remarks: '',
         lastUpdated: today,
       }));
-      await supabase.from('calling_sheet').insert(sheetRows);
+      await supabase.from('calling_sheet').insert(await pruneRows(sheetRows, 'calling_sheet', ['whatsapp', 'followUpDate', 'priority']));
       activated += inactiveToActivate.length;
     }
 
@@ -469,7 +470,7 @@ router.post('/fetch-leads', authenticateToken, requireRoles(['bda']), async (req
           lastUpdated: today,
         }));
 
-        await supabase.from('calling_sheet').insert(callingEntries);
+        await supabase.from('calling_sheet').insert(await pruneRows(callingEntries, 'calling_sheet', ['whatsapp', 'followUpDate', 'priority']));
         fetchedFromPool = unassigned.length;
 
         // Update master sheet

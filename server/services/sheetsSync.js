@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const { google } = require('googleapis');
 const supabase = require('../db/supabase');
 const { smartCleanRow } = require('./smartClean');
+const { pruneRow } = require('./columns');
 
 // Normalize a service-account private key so it works regardless of the platform's env var format.
 // Render (and most PaaS dashboards) store env vars as single-line values, so the PEM's \n
@@ -57,7 +58,7 @@ async function syncBdaSheet(userId, spreadsheetId, tab) {
     await supabase.from('calling_sheet').delete().eq('assignedUserId', userId);
 
     for (const lead of parsed) {
-      await supabase.from('calling_sheet').insert({
+      await supabase.from('calling_sheet').insert(await pruneRow({
         assignedUserId: userId,
         customerName: lead.customerName,
         contact: lead.contact,
@@ -68,7 +69,7 @@ async function syncBdaSheet(userId, spreadsheetId, tab) {
         status: '',
         remarks: '',
         lastUpdated: today,
-      });
+      }, 'calling_sheet', ['whatsapp', 'followUpDate', 'priority']));
     }
     console.log(`Assigned leads synced for BDA ${userId} (tab: ${tab || 'Sheet1'})`);
     return true;

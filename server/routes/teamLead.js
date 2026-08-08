@@ -3,6 +3,7 @@ const router = express.Router();
 const supabase = require('../db/supabase');
 const { authenticateToken, requireRoles } = require('../middleware/auth');
 const teamLeadData = require('../services/teamLeadData');
+const { pruneRows } = require('../services/columns');
 
 // GET /api/team-lead/config - Get team's master sheet URL
 router.get('/config', authenticateToken, requireRoles(['team_lead', 'admin']), async (req, res) => {
@@ -307,7 +308,7 @@ router.post('/assign-selected', authenticateToken, requireRoles(['team_lead', 'a
         remarks: '',
         lastUpdated: today,
       }));
-      await supabase.from('calling_sheet').insert(sheetRows);
+      await supabase.from('calling_sheet').insert(await pruneRows(sheetRows, 'calling_sheet', ['whatsapp', 'followUpDate', 'priority']));
     }
 
     // Assignment records

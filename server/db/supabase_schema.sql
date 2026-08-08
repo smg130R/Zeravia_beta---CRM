@@ -128,9 +128,12 @@ CREATE TABLE calling_sheet (
   college TEXT,
   branch TEXT,
   year TEXT,
+  whatsapp TEXT DEFAULT '',
   status TEXT DEFAULT 'Pending',
   "naCount" INTEGER DEFAULT 0,
   remarks TEXT DEFAULT '',
+  "followUpDate" TEXT,
+  priority TEXT,
   "lastUpdated" TEXT DEFAULT to_char(CURRENT_DATE, 'YYYY-MM-DD')
 );
 

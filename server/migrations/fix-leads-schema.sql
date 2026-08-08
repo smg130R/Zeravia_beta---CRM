@@ -26,3 +26,9 @@ BEGIN
     ALTER TABLE users RENAME COLUMN employeecode TO "employeeCode";
   END IF;
 END $$;
+
+-- calling_sheet columns the app writes (whatsapp on every "Fetch 50 Leads"
+-- insert, followUpDate/priority for follow-ups):
+ALTER TABLE calling_sheet ADD COLUMN IF NOT EXISTS whatsapp TEXT DEFAULT '';
+ALTER TABLE calling_sheet ADD COLUMN IF NOT EXISTS "followUpDate" TEXT;
+ALTER TABLE calling_sheet ADD COLUMN IF NOT EXISTS priority TEXT;

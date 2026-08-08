@@ -1,28 +1,11 @@
 const supabase = require('../db/supabase');
 const { smartCleanRow } = require('./smartClean');
+const { getMissingColumns, pruneRows } = require('./columns');
 
 // ── Team Config (masterSheetUrl on teams table) ──
 
-// Detect leads-table columns that don't exist on the live DB (schema drift) so
-// inserts/updates can omit them instead of failing. Cached per server process.
-let cachedMissingLeadCols = null;
-
 async function getMissingLeadCols() {
-  if (cachedMissingLeadCols) return cachedMissingLeadCols;
-  const candidates = ['whatsapp', 'sheetRow', 'email', 'remarks', 'payment_status', 'slot_amount', 'amount_paid', 'remaining'];
-  const missing = new Set();
-  for (const c of candidates) {
-    const { error } = await supabase.from('leads').select(c).limit(1);
-    if (error) missing.add(c);
-  }
-  cachedMissingLeadCols = missing;
-  return missing;
-}
-
-function stripMissingCols(row, missing) {
-  const out = { ...row };
-  for (const c of missing) delete out[c];
-  return out;
+  return getMissingColumns('leads', ['whatsapp', 'sheetRow', 'email', 'remarks', 'payment_status', 'slot_amount', 'amount_paid', 'remaining']);
 }
 
 async function getMasterSheetUrl(teamId) {
@@ -235,7 +218,7 @@ async function distributeLeads(teamId, assignedBy) {
         remarks: '',
         lastUpdated: today,
       }));
-      await supabase.from('calling_sheet').insert(sheetRows);
+      await supabase.from('calling_sheet').insert(await pruneRows(sheetRows, 'calling_sheet', ['whatsapp', 'followUpDate', 'priority']));
     }
 
     // Assignment records
